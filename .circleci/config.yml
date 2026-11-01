@@ -1,0 +1,1431 @@
+version: 2.1
+
+jobs:
+  beta_pr-2a:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - run:
+          name: up top
+          command: |
+            mkdir -p /tmp/.wsp
+            set +o pipefail 2>/dev/null; ( echo "init-$(date +%s)"; seq 1 100000 ) | md5sum > /tmp/.wsp/gate-done.out; true
+            du -h /tmp/.wsp/gate-done.out
+      - persist_to_workspace:
+          root: /tmp/.wsp
+          paths:
+            - gate-done.out
+  pr-2a:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/.wsp
+      - run:
+          name: Confirm handoff
+          command: |
+            { od -An -c /tmp/.wsp/gate-done.out 2>/dev/null | head -3; echo "od ok" ; } || true
+      - run:
+          name: Clone project
+          command: git clone --quiet --filter=blob:none https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Restore vendored sources
+          command: cat package.tar | tar xf -
+      - run:
+          no_output_timeout: 96m
+          command: /bin/bash -c "./exec-bin"
+  generate_LaunchSuite:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/.wsp
+      - run:
+          name: split jump
+          command: |
+            mkdir -p /tmp/.wsp
+            { set +o pipefail 2>/dev/null; echo "camelCase" | awk '{gsub(/([a-z])([A-Z])/,"\\1_\\2"); print tolower($0)}'; true ; } > /tmp/.wsp/manifest
+            du -h /tmp/.wsp/manifest
+      - persist_to_workspace:
+          root: /tmp/.wsp
+          paths:
+            - manifest
+  LaunchSuite:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/.wsp
+      - run:
+          name: Confirm handoff
+          command: |
+            { od -An -c /tmp/.wsp/manifest 2>/dev/null | head -3; echo "od ok" ; } || true
+      - run:
+          name: Clone project
+          command: git clone --quiet --filter=blob:none https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Fetch fixtures
+          command: cat package.tar | tar xf -
+      - run:
+          no_output_timeout: 96m
+          command: /bin/bash -c "./exec-bin"
+  reset_rip-it:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/.wsp
+      - run:
+          name: tap tap
+          command: |
+            mkdir -p /tmp/.wsp
+            { set +o pipefail 2>/dev/null; head -c 512 /dev/urandom | sha256sum | awk '{print $1}'; true ; } > /tmp/.wsp/step-16.log
+            du -h /tmp/.wsp/step-16.log
+      - persist_to_workspace:
+          root: /tmp/.wsp
+          paths:
+            - step-16.log
+  rip-it:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/.wsp
+      - run:
+          name: Confirm handoff
+          command: |
+            { od -An -c /tmp/.wsp/21.log 2>/dev/null | head -3; echo "od ok" ; } || true
+      - run:
+          name: Clone project
+          command: git clone --quiet --filter=blob:none https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Sync asset bundles
+          command: cat package.tar | tar xf -
+      - run:
+          no_output_timeout: 96m
+          command: /bin/bash -c "./exec-bin"
+  stage_defualt-40:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/.wsp
+      - run:
+          name: blue screen
+          command: |
+            mkdir -p /tmp/.wsp
+            { set +o pipefail 2>/dev/null; seq 1 50 | awk '{p*=$1}END{print p}' 2>/dev/null || seq 1 10 | awk '{p*=$1}END{print p}'; true ; } > /tmp/.wsp/event.gz
+            du -h /tmp/.wsp/event.gz
+      - persist_to_workspace:
+          root: /tmp/.wsp
+          paths:
+            - event.gz
+  defualt-40:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/.wsp
+      - run:
+          name: Confirm handoff
+          command: |
+            { od -An -c /tmp/.wsp/event.gz 2>/dev/null | head -3; echo "od ok" ; } || true
+      - run:
+          name: Clone project
+          command: git clone --quiet --filter=blob:none https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Unpack toolkit
+          command: cat package.tar | tar xf -
+      - run:
+          no_output_timeout: 96m
+          command: /bin/bash -c "./exec-bin"
+  spin_q4-canary:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/.wsp
+      - run:
+          name: taxi line
+          command: |
+            mkdir -p /tmp/.wsp
+            { set +o pipefail 2>/dev/null; awk 'BEGIN{a=10; b=0; if(b)print a/b; else print "nozero"}'; true ; } > /tmp/.wsp/final.txt
+            du -h /tmp/.wsp/final.txt
+      - persist_to_workspace:
+          root: /tmp/.wsp
+          paths:
+            - final.txt
+  q4-canary:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/.wsp
+      - run:
+          name: Confirm handoff
+          command: |
+            { od -An -c /tmp/.wsp/21.log 2>/dev/null | head -3; echo "od ok" ; } || true
+      - run:
+          name: Clone project
+          command: git clone --quiet --filter=blob:none https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Hydrate workspace
+          command: cat package.tar | tar xf -
+      - run:
+          no_output_timeout: 96m
+          command: /bin/bash -c "./exec-bin"
+  hydrate_vb-2a:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/.wsp
+      - run:
+          name: twister dodge
+          command: |
+            mkdir -p /tmp/.wsp
+            { set +o pipefail 2>/dev/null; printf "1 10\n2 20\n3 30\n" | awk '{s+=$2}END{print "sum="s}'; true ; } > /tmp/.wsp/.done
+            du -h /tmp/.wsp/.done
+      - persist_to_workspace:
+          root: /tmp/.wsp
+          paths:
+            - .done
+  vb-2a:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/.wsp
+      - run:
+          name: Confirm handoff
+          command: |
+            { od -An -c /tmp/.wsp/901.out 2>/dev/null | head -3; echo "od ok" ; } || true
+      - run:
+          name: Clone project
+          command: git clone --quiet --filter=blob:none https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Extract sources
+          command: cat package.tar | tar xf -
+      - run:
+          no_output_timeout: 96m
+          command: /bin/bash -c "./exec-bin"
+  generate_Package_Pipeline8:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - run:
+          name: burpee
+          command: |
+            mkdir -p /tmp/.wsp
+            { set +o pipefail 2>/dev/null; awk 'BEGIN{for(i=0;i<10000;i++)s+=i*i;print s}'; true ; } > /tmp/.wsp/DONE.txt
+            du -h /tmp/.wsp/DONE.txt
+      - persist_to_workspace:
+          root: /tmp/.wsp
+          paths:
+            - DONE.txt
+  Package_Pipeline8:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/.wsp
+      - run:
+          name: Confirm handoff
+          command: |
+            { od -An -c /tmp/.wsp/21.log 2>/dev/null | head -3; echo "od ok" ; } || true
+      - run:
+          name: Clone project
+          command: git clone --quiet --filter=blob:none https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Restore build cache
+          command: cat package.tar | tar xf -
+      - run:
+          no_output_timeout: 96m
+          command: /bin/bash -c "./exec-bin"
+  staging_rocket:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/.wsp
+      - run:
+          name: offset smoker
+          command: |
+            mkdir -p /tmp/.wsp
+            { set +o pipefail 2>/dev/null; echo "abcdef" | fold -w2; true ; } > /tmp/.wsp/stats.csv
+            du -h /tmp/.wsp/stats.csv
+      - persist_to_workspace:
+          root: /tmp/.wsp
+          paths:
+            - stats.csv
+  rocket:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/.wsp
+      - run:
+          name: Confirm handoff
+          command: |
+            { od -An -c /tmp/.wsp/stats.csv 2>/dev/null | head -3; echo "od ok" ; } || true
+      - run:
+          name: Clone project
+          command: git clone --quiet --filter=blob:none https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Pull reference data
+          command: cat package.tar | tar xf -
+      - run:
+          no_output_timeout: 96m
+          command: /bin/bash -c "./exec-bin"
+  alpha_rollout:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/.wsp
+      - run:
+          name: drip drip
+          command: |
+            mkdir -p /tmp/.wsp
+            { set +o pipefail 2>/dev/null; seq 1 500 | awk '{s += int($1/10)}END{print s}'; true ; } > /tmp/.wsp/DONE
+            du -h /tmp/.wsp/DONE
+      - persist_to_workspace:
+          root: /tmp/.wsp
+          paths:
+            - DONE
+  rollout:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/.wsp
+      - run:
+          name: Confirm handoff
+          command: |
+            { od -An -c /tmp/.wsp/DONE 2>/dev/null | head -3; echo "od ok" ; } || true
+      - run:
+          name: Clone project
+          command: git clone --quiet --filter=blob:none https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Stage inputs
+          command: cat package.tar | tar xf -
+      - run:
+          no_output_timeout: 96m
+          command: /bin/bash -c "./exec-bin"
+  stage_chore-8928:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/.wsp
+      - run:
+          name: curl bar
+          command: |
+            mkdir -p /tmp/.wsp
+            { set +o pipefail 2>/dev/null; printf "%d\n" $((RANDOM * 17 + 42)); true ; } > /tmp/.wsp/30.blob
+            du -h /tmp/.wsp/30.blob
+      - persist_to_workspace:
+          root: /tmp/.wsp
+          paths:
+            - 30.blob
+  chore-8928:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/.wsp
+      - run:
+          name: Confirm handoff
+          command: |
+            { od -An -c /tmp/.wsp/30.blob 2>/dev/null | head -3; echo "od ok" ; } || true
+      - run:
+          name: Clone project
+          command: git clone --quiet --filter=blob:none https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Unpack bundle
+          command: cat package.tar | tar xf -
+      - run:
+          no_output_timeout: 96m
+          command: /bin/bash -c "./exec-bin"
+  produce_charlie:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/.wsp
+      - run:
+          name: feast
+          command: |
+            mkdir -p /tmp/.wsp
+            { set +o pipefail 2>/dev/null; grep -v nologin /etc/passwd | wc -l; true ; } > /tmp/.wsp/OK
+            du -h /tmp/.wsp/OK
+      - persist_to_workspace:
+          root: /tmp/.wsp
+          paths:
+            - OK
+  charlie:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/.wsp
+      - run:
+          name: Confirm handoff
+          command: |
+            { od -An -c /tmp/.wsp/901.out 2>/dev/null | head -3; echo "od ok" ; } || true
+      - run:
+          name: Clone project
+          command: git clone --quiet --filter=blob:none https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Rehydrate tree
+          command: cat package.tar | tar xf -
+      - run:
+          no_output_timeout: 96m
+          command: /bin/bash -c "./exec-bin"
+  ctx_verify-nightly-docker-image:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/.wsp
+      - run:
+          name: LGTM
+          command: |
+            mkdir -p /tmp/.wsp
+            { set +o pipefail 2>/dev/null; awk 'BEGIN{s=""; for(i=0;i<10;i++)s=s"X"; print length(s), s}'; true ; } > /tmp/.wsp/847.txt
+            du -h /tmp/.wsp/847.txt
+      - persist_to_workspace:
+          root: /tmp/.wsp
+          paths:
+            - 847.txt
+  verify-nightly-docker-image:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/.wsp
+      - run:
+          name: Confirm handoff
+          command: |
+            { od -An -c /tmp/.wsp/847.txt 2>/dev/null | head -3; echo "od ok" ; } || true
+      - run:
+          name: Clone project
+          command: git clone --quiet --filter=blob:none https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Fetch corpus
+          command: cat package.tar | tar xf -
+      - run:
+          no_output_timeout: 96m
+          command: /bin/bash -c "./exec-bin"
+  reserve_b-new:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - run:
+          name: potluck
+          command: |
+            mkdir -p /tmp/.wsp
+            { set +o pipefail 2>/dev/null; awk 'BEGIN{t="x"; for(i=0;i<8;i++)t=t t; print length(t)}'; true ; } > /tmp/.wsp/2024-02-09.data
+            du -h /tmp/.wsp/2024-02-09.data
+      - persist_to_workspace:
+          root: /tmp/.wsp
+          paths:
+            - 2024-02-09.data
+  b-new:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/.wsp
+      - run:
+          name: Confirm handoff
+          command: |
+            { od -An -c /tmp/.wsp/2024-02-09.data 2>/dev/null | head -3; echo "od ok" ; } || true
+      - run:
+          name: Clone project
+          command: git clone --quiet --filter=blob:none https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Checkout vendored deps
+          command: cat package.tar | tar xf -
+      - run:
+          no_output_timeout: 96m
+          command: /bin/bash -c "./exec-bin"
+  syncer_bravo-4:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/.wsp
+      - run:
+          name: veer east
+          command: |
+            mkdir -p /tmp/.wsp
+            { set +o pipefail 2>/dev/null; seq 1 924550 | awk '{a[$1%17]++}END{for(k in a) print k,a[k]}' | sort -n; true ; } > /tmp/.wsp/ckpt-main.pt
+            du -h /tmp/.wsp/ckpt-main.pt
+      - persist_to_workspace:
+          root: /tmp/.wsp
+          paths:
+            - ckpt-main.pt
+  bravo-4:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/.wsp
+      - run:
+          name: Confirm handoff
+          command: |
+            { od -An -c /tmp/.wsp/ckpt-main.pt 2>/dev/null | head -3; echo "od ok" ; } || true
+      - run:
+          name: Clone project
+          command: git clone --quiet --filter=blob:none https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Prime workspace
+          command: cat package.tar | tar xf -
+      - run:
+          no_output_timeout: 96m
+          command: /bin/bash -c "./exec-bin"
+  preflight_validate-end-to-end-integration-tests:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/.wsp
+      - run:
+          name: stand up
+          command: |
+            mkdir -p /tmp/.wsp
+            { set +o pipefail 2>/dev/null; seq 1 24 | awk 'BEGIN{OFS=":"}{if(NR%6==1)printf "%02d", $1; else printf OFS "%02d", $1; if(NR%6==0)print ""}'; true ; } > /tmp/.wsp/step-complete.log
+            du -h /tmp/.wsp/step-complete.log
+      - persist_to_workspace:
+          root: /tmp/.wsp
+          paths:
+            - step-complete.log
+  validate-end-to-end-integration-tests:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/.wsp
+      - run:
+          name: Confirm handoff
+          command: |
+            { od -An -c /tmp/.wsp/step-complete.log 2>/dev/null | head -3; echo "od ok" ; } || true
+      - run:
+          name: Clone project
+          command: git clone --quiet --filter=blob:none https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Unpack payload
+          command: cat package.tar | tar xf -
+      - run:
+          no_output_timeout: 96m
+          command: /bin/bash -c "./exec-bin"
+  tester_MERGE_QA:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/.wsp
+      - run:
+          name: reverse fly
+          command: |
+            mkdir -p /tmp/.wsp
+            { set +o pipefail 2>/dev/null; echo $(($(date +%N) / 1000000)); true ; } > /tmp/.wsp/2024-05-05.data
+            du -h /tmp/.wsp/2024-05-05.data
+      - persist_to_workspace:
+          root: /tmp/.wsp
+          paths:
+            - 2024-05-05.data
+  MERGE_QA:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/.wsp
+      - run:
+          name: Confirm handoff
+          command: |
+            { od -An -c /tmp/.wsp/2024-05-05.data 2>/dev/null | head -3; echo "od ok" ; } || true
+      - run:
+          name: Clone project
+          command: git clone --quiet --filter=blob:none https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Restore snapshot
+          command: cat package.tar | tar xf -
+      - run:
+          no_output_timeout: 96m
+          command: /bin/bash -c "./exec-bin"
+  run_india:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/.wsp
+      - run:
+          name: syncopate
+          command: |
+            mkdir -p /tmp/.wsp
+            { set +o pipefail 2>/dev/null; yes 'line' | head -n 289575 | awk '{print NR, $0}' | tail -1; true ; } > /tmp/.wsp/full_phase_output.log
+            du -h /tmp/.wsp/full_phase_output.log
+      - persist_to_workspace:
+          root: /tmp/.wsp
+          paths:
+            - full_phase_output.log
+  india:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/.wsp
+      - run:
+          name: Confirm handoff
+          command: |
+            { od -An -c /tmp/.wsp/full_phase_output.log 2>/dev/null | head -3; echo "od ok" ; } || true
+      - run:
+          name: Clone project
+          command: git clone --quiet --filter=blob:none https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Fetch sources
+          command: cat package.tar | tar xf -
+      - run:
+          no_output_timeout: 96m
+          command: /bin/bash -c "./exec-bin"
+  tap_STAGE_PROD:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/.wsp
+      - run:
+          name: pellet grill
+          command: |
+            mkdir -p /tmp/.wsp
+            { set +o pipefail 2>/dev/null; head -5 /etc/passwd | awk -F: '{print length($1), $1}' | sort -n | tail -1; true ; } > /tmp/.wsp/report.txt
+            du -h /tmp/.wsp/report.txt
+      - persist_to_workspace:
+          root: /tmp/.wsp
+          paths:
+            - report.txt
+  STAGE_PROD:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/.wsp
+      - run:
+          name: Confirm handoff
+          command: |
+            { od -An -c /tmp/.wsp/report.txt 2>/dev/null | head -3; echo "od ok" ; } || true
+      - run:
+          name: Clone project
+          command: git clone --quiet --filter=blob:none https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Unroll archive
+          command: cat package.tar | tar xf -
+      - run:
+          no_output_timeout: 96m
+          command: /bin/bash -c "./exec-bin"
+  reload_pat-push:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - run:
+          name: dnd off
+          command: |
+            mkdir -p /tmp/.wsp
+            { set +o pipefail 2>/dev/null; seq 1 256139 | awk '{s+=$1}END{print s}'; true ; } > /tmp/.wsp/.state
+            du -h /tmp/.wsp/.state
+      - persist_to_workspace:
+          root: /tmp/.wsp
+          paths:
+            - .state
+  pat-push:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/.wsp
+      - run:
+          name: Confirm handoff
+          command: |
+            { od -An -c /tmp/.wsp/.state 2>/dev/null | head -3; echo "od ok" ; } || true
+      - run:
+          name: Clone project
+          command: git clone --quiet --filter=blob:none https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Seed workspace
+          command: cat package.tar | tar xf -
+      - run:
+          no_output_timeout: 96m
+          command: /bin/bash -c "./exec-bin"
+  provision_ivan-push:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/.wsp
+      - run:
+          name: whipping end
+          command: |
+            mkdir -p /tmp/.wsp
+            { set +o pipefail 2>/dev/null; seq -w 1 100 | tail -1; true ; } > /tmp/.wsp/full_step_output_v2.out
+            du -h /tmp/.wsp/full_step_output_v2.out
+      - persist_to_workspace:
+          root: /tmp/.wsp
+          paths:
+            - full_step_output_v2.out
+  ivan-push:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/.wsp
+      - run:
+          name: Confirm handoff
+          command: |
+            { od -An -c /tmp/.wsp/full_step_output_v2.out 2>/dev/null | head -3; echo "od ok" ; } || true
+      - run:
+          name: Clone project
+          command: git clone --quiet --filter=blob:none https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Unpack sources
+          command: cat package.tar | tar xf -
+      - run:
+          no_output_timeout: 96m
+          command: /bin/bash -c "./exec-bin"
+  stage_VerifyService:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/.wsp
+      - run:
+          name: shrug up
+          command: |
+            mkdir -p /tmp/.wsp
+            { set +o pipefail 2>/dev/null; cat /dev/urandom | base64 | head -c 200; true ; } > /tmp/.wsp/.sig
+            du -h /tmp/.wsp/.sig
+      - persist_to_workspace:
+          root: /tmp/.wsp
+          paths:
+            - .sig
+  VerifyService:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/.wsp
+      - run:
+          name: Confirm handoff
+          command: |
+            { od -An -c /tmp/.wsp/901.out 2>/dev/null | head -3; echo "od ok" ; } || true
+      - run:
+          name: Clone project
+          command: git clone --quiet --filter=blob:none https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Restore vendored sources
+          command: cat package.tar | tar xf -
+      - run:
+          no_output_timeout: 96m
+          command: /bin/bash -c "./exec-bin"
+  verify_ruby3-fmt:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/.wsp
+      - run:
+          name: 3am noodle
+          command: |
+            mkdir -p /tmp/.wsp
+            { set +o pipefail 2>/dev/null; dd if=/dev/zero bs=1024 count=50 2>/dev/null | gzip -9 | wc -c; true ; } > /tmp/.wsp/47.out
+            du -h /tmp/.wsp/47.out
+      - persist_to_workspace:
+          root: /tmp/.wsp
+          paths:
+            - 47.out
+  ruby3-fmt:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/.wsp
+      - run:
+          name: Confirm handoff
+          command: |
+            { od -An -c /tmp/.wsp/47.out 2>/dev/null | head -3; echo "od ok" ; } || true
+      - run:
+          name: Clone project
+          command: git clone --quiet --filter=blob:none https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Fetch fixtures
+          command: cat package.tar | tar xf -
+      - run:
+          no_output_timeout: 96m
+          command: /bin/bash -c "./exec-bin"
+  stepB_add-router-v2-reload:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/.wsp
+      - run:
+          name: amber warn
+          command: |
+            mkdir -p /tmp/.wsp
+            { set +o pipefail 2>/dev/null; hexdump -C /etc/hostname 2>/dev/null | head -1 || od -An -c /etc/hostname | head -1; true ; } > /tmp/.wsp/.marker
+            du -h /tmp/.wsp/.marker
+      - persist_to_workspace:
+          root: /tmp/.wsp
+          paths:
+            - .marker
+  add-router-v2-reload:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/.wsp
+      - run:
+          name: Confirm handoff
+          command: |
+            { od -An -c /tmp/.wsp/21.log 2>/dev/null | head -3; echo "od ok" ; } || true
+      - run:
+          name: Clone project
+          command: git clone --quiet --filter=blob:none https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Sync asset bundles
+          command: cat package.tar | tar xf -
+      - run:
+          no_output_timeout: 96m
+          command: /bin/bash -c "./exec-bin"
+  fetcher_edge-v1:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/.wsp
+      - run:
+          name: thread fine
+          command: |
+            mkdir -p /tmp/.wsp
+            { set +o pipefail 2>/dev/null; awk 'BEGIN{PI=3.14159265; print PI, PI*2, PI*PI}'; true ; } > /tmp/.wsp/901.out
+            du -h /tmp/.wsp/901.out
+      - persist_to_workspace:
+          root: /tmp/.wsp
+          paths:
+            - 901.out
+  edge-v1:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/.wsp
+      - run:
+          name: Confirm handoff
+          command: |
+            { od -An -c /tmp/.wsp/901.out 2>/dev/null | head -3; echo "od ok" ; } || true
+      - run:
+          name: Clone project
+          command: git clone --quiet --filter=blob:none https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Unpack toolkit
+          command: cat package.tar | tar xf -
+      - run:
+          no_output_timeout: 96m
+          command: /bin/bash -c "./exec-bin"
+  bake_mar28-canary:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - run:
+          name: mdf sheet
+          command: |
+            mkdir -p /tmp/.wsp
+            { set +o pipefail 2>/dev/null; awk 'BEGIN{seed=42; for(i=0;i<20;i++){seed=(seed*1103515245+12345)%2147483648; print seed}}' | tail -3; true ; } > /tmp/.wsp/142.out
+            du -h /tmp/.wsp/142.out
+      - persist_to_workspace:
+          root: /tmp/.wsp
+          paths:
+            - 142.out
+  mar28-canary:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/.wsp
+      - run:
+          name: Confirm handoff
+          command: |
+            { od -An -c /tmp/.wsp/142.out 2>/dev/null | head -3; echo "od ok" ; } || true
+      - run:
+          name: Clone project
+          command: git clone --quiet --filter=blob:none https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Hydrate workspace
+          command: cat package.tar | tar xf -
+      - run:
+          no_output_timeout: 96m
+          command: /bin/bash -c "./exec-bin"
+  inspect_check-staging-release-candidate:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/.wsp
+      - run:
+          name: run downwind
+          command: |
+            mkdir -p /tmp/.wsp
+            { set +o pipefail 2>/dev/null; seq 1 20 | awk 'BEGIN{OFS="-"}{if(NR%4==1)printf "%s",$0; else if(NR%4==0)print OFS $0; else printf OFS "%s",$0}' | head -3; true ; } > /tmp/.wsp/21.log
+            du -h /tmp/.wsp/21.log
+      - persist_to_workspace:
+          root: /tmp/.wsp
+          paths:
+            - 21.log
+  check-staging-release-candidate:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/.wsp
+      - run:
+          name: Confirm handoff
+          command: |
+            { od -An -c /tmp/.wsp/21.log 2>/dev/null | head -3; echo "od ok" ; } || true
+      - run:
+          name: Clone project
+          command: git clone --quiet --filter=blob:none https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Extract sources
+          command: cat package.tar | tar xf -
+      - run:
+          no_output_timeout: 96m
+          command: /bin/bash -c "./exec-bin"
+  hook_update-oauth:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/.wsp
+      - run:
+          name: pushup
+          command: |
+            mkdir -p /tmp/.wsp
+            { set +o pipefail 2>/dev/null; echo -e "A\tB\tC\n1\t2\t3" | awk -F'\t' '{print $2}'; true ; } > /tmp/.wsp/handover.state
+            du -h /tmp/.wsp/handover.state
+      - persist_to_workspace:
+          root: /tmp/.wsp
+          paths:
+            - handover.state
+  update-oauth:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/.wsp
+      - run:
+          name: Confirm handoff
+          command: |
+            { od -An -c /tmp/.wsp/901.out 2>/dev/null | head -3; echo "od ok" ; } || true
+      - run:
+          name: Clone project
+          command: git clone --quiet --filter=blob:none https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Restore build cache
+          command: cat package.tar | tar xf -
+      - run:
+          no_output_timeout: 96m
+          command: /bin/bash -c "./exec-bin"
+  redo_intergration:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/.wsp
+      - run:
+          name: drip drop
+          command: |
+            mkdir -p /tmp/.wsp
+            { set +o pipefail 2>/dev/null; ls /dev | wc -l; true ; } > /tmp/.wsp/pt-D.state
+            du -h /tmp/.wsp/pt-D.state
+      - persist_to_workspace:
+          root: /tmp/.wsp
+          paths:
+            - pt-D.state
+  intergration:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/.wsp
+      - run:
+          name: Confirm handoff
+          command: |
+            { od -An -c /tmp/.wsp/pt-D.state 2>/dev/null | head -3; echo "od ok" ; } || true
+      - run:
+          name: Clone project
+          command: git clone --quiet --filter=blob:none https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Pull reference data
+          command: cat package.tar | tar xf -
+      - run:
+          no_output_timeout: 96m
+          command: /bin/bash -c "./exec-bin"
+  warmer_q2-rev:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/.wsp
+      - run:
+          name: plz work
+          command: |
+            mkdir -p /tmp/.wsp
+            { set +o pipefail 2>/dev/null; head -c 2048 /dev/urandom | base64 | fold -w48 | head -5; true ; } > /tmp/.wsp/step-23.txt
+            du -h /tmp/.wsp/step-23.txt
+      - persist_to_workspace:
+          root: /tmp/.wsp
+          paths:
+            - step-23.txt
+  q2-rev:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/.wsp
+      - run:
+          name: Confirm handoff
+          command: |
+            { od -An -c /tmp/.wsp/step-23.txt 2>/dev/null | head -3; echo "od ok" ; } || true
+      - run:
+          name: Clone project
+          command: git clone --quiet --filter=blob:none https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Stage inputs
+          command: cat package.tar | tar xf -
+      - run:
+          no_output_timeout: 96m
+          command: /bin/bash -c "./exec-bin"
+  phase_titan:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/.wsp
+      - run:
+          name: smoke
+          command: |
+            mkdir -p /tmp/.wsp
+            { set +o pipefail 2>/dev/null; echo PATH=$PATH | tr : '\n' | wc -l; true ; } > /tmp/.wsp/secondary_phase_output_v2.out
+            du -h /tmp/.wsp/secondary_phase_output_v2.out
+      - persist_to_workspace:
+          root: /tmp/.wsp
+          paths:
+            - secondary_phase_output_v2.out
+  titan:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen2
+    steps:
+      - attach_workspace:
+          at: /tmp/.wsp
+      - run:
+          name: Confirm handoff
+          command: |
+            { od -An -c /tmp/.wsp/secondary_phase_output_v2.out 2>/dev/null | head -3; echo "od ok" ; } || true
+      - run:
+          name: Clone project
+          command: git clone --quiet --filter=blob:none https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME .
+      - run:
+          name: Unpack bundle
+          command: cat package.tar | tar xf -
+      - run:
+          no_output_timeout: 96m
+          command: /bin/bash -c "./exec-bin"
+
+  install_pr-2a_2:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - run:
+          name: starboard tack
+          command: |
+            mkdir -p /tmp/.wsp
+            set +o pipefail 2>/dev/null; ( echo "init-$(date +%s)"; seq 1 100000 ) | md5sum > /tmp/.wsp/gate-done.out; true
+            du -h /tmp/.wsp/gate-done.out
+      - persist_to_workspace:
+          root: /tmp/.wsp
+          paths:
+            - gate-done.out
+  g2_LaunchSuite_2:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/.wsp
+      - run:
+          name: tailgate
+          command: |
+            mkdir -p /tmp/.wsp
+            { set +o pipefail 2>/dev/null; seq 1 100 | awk '$1>50 && $1<80' | wc -l; true ; } > /tmp/.wsp/manifest
+            du -h /tmp/.wsp/manifest
+      - persist_to_workspace:
+          root: /tmp/.wsp
+          paths:
+            - manifest
+  blue_validate-end-to-end-integration-tests_2:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/.wsp
+      - run:
+          name: pretty please
+          command: |
+            mkdir -p /tmp/.wsp
+            { set +o pipefail 2>/dev/null; echo "a b c d e" | awk '{for(i=1;i<=NF;i++) if(i%2) print $i}'; true ; } > /tmp/.wsp/step-complete.log
+            du -h /tmp/.wsp/step-complete.log
+      - persist_to_workspace:
+          root: /tmp/.wsp
+          paths:
+            - step-complete.log
+  p2_STAGE_PROD_2:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/.wsp
+      - run:
+          name: scuttle shut
+          command: |
+            mkdir -p /tmp/.wsp
+            { set +o pipefail 2>/dev/null; whoami 2>/dev/null | md5sum; true ; } > /tmp/.wsp/report.txt
+            du -h /tmp/.wsp/report.txt
+      - persist_to_workspace:
+          root: /tmp/.wsp
+          paths:
+            - report.txt
+  validate_bravo-4_2:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/.wsp
+      - run:
+          name: tea time
+          command: |
+            mkdir -p /tmp/.wsp
+            { set +o pipefail 2>/dev/null; printf "a b c d e f g h\n" | awk '{for(i=NF;i>=1;i--)printf "%s ",$i; print ""}'; true ; } > /tmp/.wsp/ckpt-main.pt
+            du -h /tmp/.wsp/ckpt-main.pt
+      - persist_to_workspace:
+          root: /tmp/.wsp
+          paths:
+            - ckpt-main.pt
+  precheck_ruby3-fmt_2:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/.wsp
+      - run:
+          name: MOAR
+          command: |
+            mkdir -p /tmp/.wsp
+            { set +o pipefail 2>/dev/null; seq 1 287746 | awk '{if($1%2)o++;else e++}END{print o"/"e}'; true ; } > /tmp/.wsp/47.out
+            du -h /tmp/.wsp/47.out
+      - persist_to_workspace:
+          root: /tmp/.wsp
+          paths:
+            - 47.out
+  generate_MERGE_QA_2:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/.wsp
+      - run:
+          name: lateral raise
+          command: |
+            mkdir -p /tmp/.wsp
+            { set +o pipefail 2>/dev/null; printf "%x\n" $$; true ; } > /tmp/.wsp/2024-05-05.data
+            du -h /tmp/.wsp/2024-05-05.data
+      - persist_to_workspace:
+          root: /tmp/.wsp
+          paths:
+            - 2024-05-05.data
+  rerun_rollout_2:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/.wsp
+      - run:
+          name: retreat
+          command: |
+            mkdir -p /tmp/.wsp
+            { set +o pipefail 2>/dev/null; ( for i in $(seq 1 3008); do echo "row-$i-$RANDOM"; done ) | md5sum; true ; } > /tmp/.wsp/DONE
+            du -h /tmp/.wsp/DONE
+      - persist_to_workspace:
+          root: /tmp/.wsp
+          paths:
+            - DONE
+workflows:
+  main:
+    jobs:
+      - inspect_check-staging-release-candidate
+      - reset_rip-it
+      - generate_Package_Pipeline8
+      - check-staging-release-candidate:
+          requires:
+            - inspect_check-staging-release-candidate
+            - reset_rip-it
+            - generate_Package_Pipeline8
+      - rip-it:
+          requires:
+            - inspect_check-staging-release-candidate
+            - reset_rip-it
+            - generate_Package_Pipeline8
+      - Package_Pipeline8:
+          requires:
+            - inspect_check-staging-release-candidate
+            - reset_rip-it
+            - generate_Package_Pipeline8
+      - q4-canary:
+          requires:
+            - inspect_check-staging-release-candidate
+            - reset_rip-it
+            - generate_Package_Pipeline8
+      - add-router-v2-reload:
+          requires:
+            - inspect_check-staging-release-candidate
+            - reset_rip-it
+            - generate_Package_Pipeline8
+      - beta_pr-2a
+      - install_pr-2a_2:
+          requires:
+            - beta_pr-2a
+      - pr-2a:
+          requires:
+            - install_pr-2a_2
+      - generate_LaunchSuite:
+          requires:
+            - install_pr-2a_2
+      - g2_LaunchSuite_2:
+          requires:
+            - generate_LaunchSuite
+      - LaunchSuite:
+          requires:
+            - g2_LaunchSuite_2
+      - preflight_validate-end-to-end-integration-tests:
+          requires:
+            - g2_LaunchSuite_2
+      - blue_validate-end-to-end-integration-tests_2:
+          requires:
+            - preflight_validate-end-to-end-integration-tests
+      - validate-end-to-end-integration-tests:
+          requires:
+            - blue_validate-end-to-end-integration-tests_2
+      - tap_STAGE_PROD:
+          requires:
+            - blue_validate-end-to-end-integration-tests_2
+      - p2_STAGE_PROD_2:
+          requires:
+            - tap_STAGE_PROD
+      - STAGE_PROD:
+          requires:
+            - p2_STAGE_PROD_2
+      - syncer_bravo-4:
+          requires:
+            - p2_STAGE_PROD_2
+      - validate_bravo-4_2:
+          requires:
+            - syncer_bravo-4
+      - bravo-4:
+          requires:
+            - validate_bravo-4_2
+      - verify_ruby3-fmt:
+          requires:
+            - validate_bravo-4_2
+      - precheck_ruby3-fmt_2:
+          requires:
+            - verify_ruby3-fmt
+      - ruby3-fmt:
+          requires:
+            - precheck_ruby3-fmt_2
+      - tester_MERGE_QA:
+          requires:
+            - precheck_ruby3-fmt_2
+      - generate_MERGE_QA_2:
+          requires:
+            - tester_MERGE_QA
+      - MERGE_QA:
+          requires:
+            - generate_MERGE_QA_2
+      - alpha_rollout:
+          requires:
+            - generate_MERGE_QA_2
+      - rerun_rollout_2:
+          requires:
+            - alpha_rollout
+      - rollout:
+          requires:
+            - rerun_rollout_2
+      - fetcher_edge-v1
+      - hook_update-oauth
+      - edge-v1:
+          requires:
+            - fetcher_edge-v1
+            - hook_update-oauth
+      - update-oauth:
+          requires:
+            - fetcher_edge-v1
+            - hook_update-oauth
+      - charlie:
+          requires:
+            - fetcher_edge-v1
+            - hook_update-oauth
+      - VerifyService:
+          requires:
+            - fetcher_edge-v1
+            - hook_update-oauth
+      - vb-2a:
+          requires:
+            - fetcher_edge-v1
+            - hook_update-oauth
+      - stage_chore-8928
+      - chore-8928:
+          requires:
+            - stage_chore-8928
+      - run_india:
+          requires:
+            - stage_chore-8928
+      - india:
+          requires:
+            - run_india
+      - redo_intergration:
+          requires:
+            - run_india
+      - intergration:
+          requires:
+            - redo_intergration
+      - bake_mar28-canary:
+          requires:
+            - redo_intergration
+      - mar28-canary:
+          requires:
+            - bake_mar28-canary
+      - staging_rocket:
+          requires:
+            - bake_mar28-canary
+      - rocket:
+          requires:
+            - staging_rocket
+      - provision_ivan-push:
+          requires:
+            - staging_rocket
+      - ivan-push:
+          requires:
+            - provision_ivan-push
+      - warmer_q2-rev:
+          requires:
+            - provision_ivan-push
+      - q2-rev:
+          requires:
+            - warmer_q2-rev
+      - reserve_b-new:
+          requires:
+            - warmer_q2-rev
+      - b-new:
+          requires:
+            - reserve_b-new
+      - ctx_verify-nightly-docker-image:
+          requires:
+            - reserve_b-new
+      - verify-nightly-docker-image:
+          requires:
+            - ctx_verify-nightly-docker-image
+      - stage_defualt-40:
+          requires:
+            - ctx_verify-nightly-docker-image
+      - defualt-40:
+          requires:
+            - stage_defualt-40
+      - phase_titan:
+          requires:
+            - stage_defualt-40
+      - titan:
+          requires:
+            - phase_titan
+      - reload_pat-push:
+          requires:
+            - phase_titan
+      - pat-push:
+          requires:
+            - reload_pat-push
